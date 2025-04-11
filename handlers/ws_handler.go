@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"encoding/json"
+	"log"
 	"net/http"
 	"tienlen-server/managers"
 	"tienlen-server/models"
@@ -53,5 +55,53 @@ func WebSocketHandler(c *gin.Context) {
 			p.Conn.WriteJSON(gin.H{"type": "your_cards", "data": hand})
 			i++
 		}
+		room.DetermineFirstPlayer()
+
+		room.Broadcast("game_start", gin.H{
+			"first_player_id":   room.CurrentTurnPlayerID,
+			"first_player_name": room.Players[room.CurrentTurnPlayerID].Username,
+		}, nil)
+
 	}
+	for {
+		_, msg, err := conn.ReadMessage()
+		if err != nil {
+			log.Printf("read error: %v", err)
+			room.RemovePlayer(player.ID)
+			break
+		}
+
+		var payload map[string]interface{}
+		if err := json.Unmarshal(msg, &payload); err != nil {
+			log.Println("invalid message format:", err)
+			continue
+		}
+
+		eventType, _ := payload["type"].(string)
+		data := payload["data"]
+
+		switch eventType {
+		case "play_card":
+			var cards []string
+			if arr, ok := data.([]interface{}); ok {
+				for _, c := range arr {
+					if s, ok := c.(string); ok {
+						cards = append(cards, s)
+					}
+				}
+			}
+			room.HandlePlayCard(player.ID, cards)
+
+			// 👉 Bạn có thể thêm các case như "pass", "chat", v.v. ở đây
+		}
+	}
+}
+
+func contains(slice []string, s string) bool {
+	for _, v := range slice {
+		if v == s {
+			return true
+		}
+	}
+	return false
 }
