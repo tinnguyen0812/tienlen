@@ -1,12 +1,17 @@
 package main
 
 import (
+	"log"
+	"net/http"
+	"tienlen-server/handlers"
+
 	"github.com/gin-gonic/gin"
-	"tienlen-server/router"
 )
 
 func main() {
 	r := gin.Default()
-	router.SetupRoutes(r)
-	r.Run(":8080")
+	r.GET("/ws", handlers.WebSocketHandler)
+
+	log.Println("Server listening on :8080")
+	http.ListenAndServe(":8080", r)
 }

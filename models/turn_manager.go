@@ -2,41 +2,20 @@ package models
 
 type TurnManager struct {
 	PlayerOrder []string
-	CurrentTurn int
+	CurrentIdx  int
 }
 
-func NewTurnManager(playerIDs []string, room *Room) *TurnManager {
-	firstTurn := findPlayerWithThreeSpades(room)
+func NewTurnManager(playerIDs []string) *TurnManager {
 	return &TurnManager{
 		PlayerOrder: playerIDs,
-		CurrentTurn: firstTurn,
+		CurrentIdx:  0,
 	}
 }
 
 func (tm *TurnManager) GetCurrentPlayer() string {
-	return tm.PlayerOrder[tm.CurrentTurn]
+	return tm.PlayerOrder[tm.CurrentIdx]
 }
 
 func (tm *TurnManager) NextTurn() {
-	tm.CurrentTurn = (tm.CurrentTurn + 1) % len(tm.PlayerOrder)
-}
-
-func findPlayerWithThreeSpades(room *Room) int {
-	for i, playerID := range getSortedPlayerIDs(room) {
-		cards := room.PlayerCards[playerID]
-		for _, card := range cards {
-			if card.Rank == "3" && card.Suit == Spades {
-				return i
-			}
-		}
-	}
-	return 0
-}
-
-func getSortedPlayerIDs(room *Room) []string {
-	var ids []string
-	for id := range room.Players {
-		ids = append(ids, id)
-	}
-	return ids
+	tm.CurrentIdx = (tm.CurrentIdx + 1) % len(tm.PlayerOrder)
 }
